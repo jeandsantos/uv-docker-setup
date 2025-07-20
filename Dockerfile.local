@@ -8,25 +8,21 @@ ARG image_repository=path_to_image_repository
 LABEL "base_image"="europe-west-1-docker.pkg.dev/${image_repository}" \
       "description"="Description of the image" 
 
-# https://pypi.org/simple
 ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
 ENV UV_COMPILE_BYTECODE=1
 ENV PIP_INDEX=$PIP_EXTRA_INDEX_URL
 ENV PYTHON_VERSION=3.11.7
 
+RUN uv python install $PYTHON_VERSION
+RUN uv python pin $PYTHON_VERSION
+
 COPY --chown=spark:spark . /app
 
 RUN uv venv .venv
-# Use the virtual environment automatically
 ENV VIRTUAL_ENV=/app/.venv
-# Place entry points in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
-RUN uv python install $PYTHON_VERSION
-RUN uv python pin $PYTHON_VERSION
 
 COPY pyproject.toml .
 RUN uv pip install --index=$PIP_INDEX -r pyproject.toml
 COPY . .
 RUN uv pip install --index=$PIP_INDEX -e ".[dev]"
-
