@@ -1,0 +1,24 @@
+FROM redhat/ubi9
+
+ARG image_repository=path_to_image_repository
+
+LABEL "BASE OS"="europe-west-1-docker.pkg.dev/${image_repository}" \
+      "Requirements file"="pyproject.toml" \
+      "Description"="Description of the image" 
+
+# https://pypi.org/simple
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+ENV PIP_INDEX=$PIP_EXTRA_INDEX_URL
+ENV DOCKER_BUILDKIT=1
+ENV PYTHON_VERSION=3.11.7
+
+COPY --chown=spark:spark . .
+
+RUN dnf install -y python3.11-pip python3.11-pip
+RUN pip3.11 install --upgrade pip
+RUN pip3.11 install uv
+RUN uv python install $PYTHON_VERSION
+RUN uv python pin $PYTHON_VERSION
+RUN uv venv .venv
+RUN source .venv/bin/activate
+RUN uv pip install --index=$PIP_INDEX .
