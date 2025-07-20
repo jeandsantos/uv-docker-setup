@@ -1,0 +1,33 @@
+FROM redhat/ubi9
+COPY --from=ghcr.io/astral-sh/uv:0.8.0 /uv /uvx /bin/
+
+WORKDIR /app
+
+ARG image_repository=path_to_image_repository
+
+LABEL "BASE OS"="europe-west-1-docker.pkg.dev/${image_repository}" \
+      "Requirements file"="pyproject.toml" \
+      "Description"="Description of the image" 
+
+# https://pypi.org/simple
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+ENV UV_COMPILE_BYTECODE=1
+ENV PIP_INDEX=$PIP_EXTRA_INDEX_URL
+ENV PYTHON_VERSION=3.11.7
+
+COPY --chown=spark:spark . /app
+
+RUN uv venv .venv
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/app/.venv
+# Place entry points in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN uv python install $PYTHON_VERSION
+RUN uv python pin $PYTHON_VERSION
+
+COPY pyproject.toml .
+RUN uv pip install --index=$PIP_INDEX -r pyproject.toml
+COPY . .
+RUN uv pip install --index=$PIP_INDEX -e ".[dev]"
+
