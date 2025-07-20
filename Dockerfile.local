@@ -5,9 +5,8 @@ WORKDIR /app
 
 ARG image_repository=path_to_image_repository
 
-LABEL "BASE OS"="europe-west-1-docker.pkg.dev/${image_repository}" \
-      "Requirements file"="pyproject.toml" \
-      "Description"="Description of the image" 
+LABEL "base_image"="europe-west-1-docker.pkg.dev/${image_repository}" \
+      "description"="Description of the image" 
 
 # https://pypi.org/simple
 ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
